@@ -1,0 +1,358 @@
+{% extends "base.html" %}
+{% block title %}Dashboard · Midnight Notes{% endblock %}
+{% block content %}
+<div class="max-w-6xl mx-auto py-4 px-4 space-y-4">
+    <div class="flex items-center justify-between gap-3">
+        <div>
+            <h1 class="text-sm font-semibold">Board</h1>
+            <p class="text-[11px] text-neutral-400">Drag notes freely. Changes are saved automatically.</p>
+        </div>
+        <form method="post" action="{% url 'create_note' %}" class="flex items-center gap-2 text-xs" id="quick-note-form">
+            {% csrf_token %}
+            <input name="title" placeholder="New note title" class="w-40 rounded-md border border-neutral-700 bg-neutral-900/70 px-2 py-1 text-[11px] focus:outline-none focus:border-[#4F8CFF]" />
+            <select name="color" class="rounded-md border border-neutral-700 bg-neutral-900/70 px-2 py-1 text-[11px] focus:outline-none focus:border-[#4F8CFF]">
+                <option value="#FFF176">Electric Yellow</option>
+                <option value="#C7A4FF">Soft Purple</option>
+                <option value="#FF8A80">Soft Coral</option>
+                <option value="#A5D6A7">Mint</option>
+                <option value="#80CBC4">Teal</option>
+            </select>
+            <div class="relative">
+                <input id="quick-tags-input" name="tags" placeholder="tags (comma,separated)" class="w-40 rounded-md border border-neutral-700 bg-neutral-900/70 px-2 py-1 text-[11px] focus:outline-none focus:border-[#4F8CFF]" />
+                <button type="button"
+                        id="quick-tags-toggle"
+                        class="absolute inset-y-0 right-1 flex items-center text-[11px] text-neutral-400 hover:text-neutral-100 px-1">
+                    ▾
+                </button>
+                <div id="quick-tags-menu"
+                     class="hidden absolute right-0 mt-1 w-40 rounded-md border border-neutral-800 bg-[#1E1E1E] shadow-lg text-[11px] text-neutral-200 z-20">
+                    <button type="button" class="tag-option w-full text-left px-3 py-1 hover:bg-neutral-800" data-tag="work">work</button>
+                    <button type="button" class="tag-option w-full text-left px-3 py-1 hover:bg-neutral-800" data-tag="idea">idea</button>
+                    <button type="button" class="tag-option w-full text-left px-3 py-1 hover:bg-neutral-800" data-tag="focus">focus</button>
+                    <button type="button" class="tag-option w-full text-left px-3 py-1 hover:bg-neutral-800" data-tag="personal">personal</button>
+                    <button type="button" class="tag-option w-full text-left px-3 py-1 hover:bg-neutral-800" data-tag="todo">todo</button>
+                </div>
+            </div>
+            <button type="submit" class="inline-flex items-center gap-1 rounded-md bg-[#4F8CFF] px-3 py-1.5 text-[11px] font-medium text-white hover:bg-[#3b6fd1] transition-colors">
+                + Add note
+            </button>
+        </form>
+    </div>
+
+    <div id="board"
+         class="relative rounded-2xl border border-neutral-800 bg-gradient-to-b from-[#1E1E1E] to-[#121212] min-h-[520px] overflow-hidden">
+        {% for note in notes %}
+            <div class="note absolute rounded-xl shadow-md shadow-black/50 text-xs"
+                 data-id="{{ note.id }}"
+                 style="left: {{ note.x }}px; top: {{ note.y }}px; width: {{ note.width }}px; height: {{ note.height }}px; background-color: {{ note.color }};">
+                <div class="note-handle flex items-center justify-between px-3 py-2 text-[11px] font-medium text-neutral-900/90">
+                    <span class="truncate max-w-[150px]">{{ note.title }}</span>
+                    <div class="flex items-center gap-1">
+                        {% if note.tags %}
+                            <span class="rounded-full bg-black/10 px-2 py-0.5 text-[10px] text-neutral-900/80">
+                                {{ note.tags }}
+                            </span>
+                        {% endif %}
+                        <button type="button"
+                                class="open-note inline-flex items-center justify-center w-6 h-6 rounded-full bg-black/5 hover:bg-black/10 text-[14px] text-neutral-900/80 hover:text-black"
+                                data-note-id="{{ note.id }}"
+                                data-title="{{ note.title|escape }}"
+                                data-content="{{ note.content|escape }}"
+                                data-color="{{ note.color }}"
+                                data-tags="{{ note.tags|default_if_none:''|escape }}"
+                                data-last-edited="{{ note.last_edited|date:'M j, H:i' }}">
+                            ⋮
+                        </button>
+                    </div>
+                </div>
+                <div class="px-3 py-2 text-[11px] text-neutral-900/90 leading-snug h-[calc(100%-52px)] overflow-hidden">
+                    <p class="line-clamp-6 whitespace-pre-wrap">{{ note.content|default:"(no content yet)" }}</p>
+                </div>
+                <div class="note-resize absolute bottom-1 right-1 w-3 h-3 border-r-2 border-b-2 border-neutral-900/50"></div>
+            </div>
+        {% empty %}
+            <div class="absolute inset-0 flex items-center justify-center text-xs text-neutral-500">
+                No notes yet. Create your first idea in the top-right.
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Modal -->
+<div id="note-modal"
+     class="fixed inset-0 z-40 hidden items-center justify-center bg-black/70">
+    <div class="w-full max-w-lg rounded-2xl border border-neutral-800 bg-[#1E1E1E] shadow-2xl shadow-black/70 p-5 text-xs">
+        <div class="flex items-center justify-between mb-3">
+            <h2 class="text-sm font-semibold">Edit note</h2>
+            <button type="button" id="modal-close" class="text-neutral-400 hover:text-neutral-200 text-sm">✕</button>
+        </div>
+        <form id="note-form" method="post">
+            {% csrf_token %}
+            <input type="hidden" name="note_id" id="modal-note-id">
+            <div class="space-y-2">
+                <div>
+                    <label class="block text-[11px] text-neutral-300 mb-1">Title</label>
+                    <input id="modal-title" name="title"
+                           class="w-full rounded-md border border-neutral-700 bg-neutral-900/60 px-2 py-1.5 text-[11px] focus:outline-none focus:border-[#4F8CFF]">
+                </div>
+                <div>
+                    <label class="block text-[11px] text-neutral-300 mb-1">Content</label>
+                    <textarea id="modal-content" name="content" rows="5"
+                              class="w-full rounded-md border border-neutral-700 bg-neutral-900/60 px-2 py-1.5 text-[11px] focus:outline-none focus:border-[#4F8CFF]"></textarea>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[11px] text-neutral-300 mb-1">Color</label>
+                        <select id="modal-color" name="color"
+                                class="w-full rounded-md border border-neutral-700 bg-neutral-900/60 px-2 py-1.5 text-[11px] focus:outline-none focus:border-[#4F8CFF]">
+                            <option value="#FFF176">Electric Yellow</option>
+                            <option value="#C7A4FF">Soft Purple</option>
+                            <option value="#FF8A80">Soft Coral</option>
+                            <option value="#A5D6A7">Mint</option>
+                            <option value="#80CBC4">Teal</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] text-neutral-300 mb-1">Tags</label>
+                        <input id="modal-tags" name="tags"
+                               class="w-full rounded-md border border-neutral-700 bg-neutral-900/60 px-2 py-1.5 text-[11px] focus:outline-none focus:border-[#4F8CFF]"
+                               placeholder="work, idea, focus">
+                    </div>
+                </div>
+                <p id="modal-meta" class="text-[10px] text-neutral-500 mt-1"></p>
+            </div>
+            <div class="mt-4 flex items-center justify-between">
+                <button type="button" id="modal-delete"
+                        class="text-[11px] text-red-400 hover:text-red-300">
+                    Delete note
+                </button>
+                <div class="flex items-center gap-2">
+                    <button type="button" id="modal-cancel"
+                            class="rounded-md border border-neutral-700 px-3 py-1.5 text-[11px] text-neutral-200 hover:bg-neutral-800/80">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                            class="rounded-md bg-[#4F8CFF] px-3 py-1.5 text-[11px] font-medium text-white hover:bg-[#3b6fd1]">
+                        Save changes
+                    </button>
+                </div>
+            </div>
+        </form>
+        <form id="note-delete-form" method="post" class="hidden">
+            {% csrf_token %}
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_body %}
+<script>
+    function getCSRFToken() {
+        const name = 'csrftoken';
+        const cookies = document.cookie ? document.cookie.split(';') : [];
+        for (let cookie of cookies) {
+            cookie = cookie.trim();
+            if (cookie.startsWith(name + '=')) {
+                return decodeURIComponent(cookie.substring(name.length + 1));
+            }
+        }
+        return '';
+    }
+
+    const csrfToken = getCSRFToken();
+    const board = document.getElementById('board');
+    let activeNote = null;
+    let isDragging = false;
+    let isResizing = false;
+    let offsetX = 0;
+    let offsetY = 0;
+    let startWidth = 0;
+    let startHeight = 0;
+    let startMouseX = 0;
+    let startMouseY = 0;
+
+    board?.addEventListener('mousedown', (e) => {
+        const noteEl = e.target.closest('.note');
+        if (!noteEl) return;
+        if (e.target.classList.contains('note-resize')) {
+            isResizing = true;
+            activeNote = noteEl;
+            const rect = noteEl.getBoundingClientRect();
+            startWidth = rect.width;
+            startHeight = rect.height;
+            startMouseX = e.clientX;
+            startMouseY = e.clientY;
+            e.preventDefault();
+            return;
+        }
+        if (e.target.closest('.note-handle')) {
+            isDragging = true;
+            activeNote = noteEl;
+            const rect = noteEl.getBoundingClientRect();
+            const boardRect = board.getBoundingClientRect();
+            offsetX = e.clientX - rect.left;
+            offsetY = e.clientY - rect.top;
+            // bring to front
+            noteEl.style.zIndex = String(Date.now());
+            e.preventDefault();
+        }
+    });
+
+    window.addEventListener('mousemove', (e) => {
+        if (!activeNote) return;
+        const boardRect = board.getBoundingClientRect();
+        if (isDragging) {
+            let x = e.clientX - boardRect.left - offsetX;
+            let y = e.clientY - boardRect.top - offsetY;
+            x = Math.max(0, Math.min(x, boardRect.width - activeNote.offsetWidth));
+            y = Math.max(0, Math.min(y, boardRect.height - activeNote.offsetHeight));
+            activeNote.style.left = x + 'px';
+            activeNote.style.top = y + 'px';
+        } else if (isResizing) {
+            let newWidth = startWidth + (e.clientX - startMouseX);
+            let newHeight = startHeight + (e.clientY - startMouseY);
+            newWidth = Math.max(160, newWidth);
+            newHeight = Math.max(160, newHeight);
+            activeNote.style.width = newWidth + 'px';
+            activeNote.style.height = newHeight + 'px';
+        }
+    });
+
+    function sendPositionUpdate(noteEl) {
+        const id = noteEl.dataset.id;
+        const x = parseInt(noteEl.style.left, 10) || 0;
+        const y = parseInt(noteEl.style.top, 10) || 0;
+        fetch(`/notes/${id}/position/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken,
+                'X-Requested-With': 'XMLHttpRequest',
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams({x, y}),
+        }).catch(() => {});
+    }
+
+    function sendSizeUpdate(noteEl) {
+        const id = noteEl.dataset.id;
+        const width = parseInt(noteEl.style.width, 10) || 200;
+        const height = parseInt(noteEl.style.height, 10) || 200;
+        fetch(`/notes/${id}/size/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken,
+                'X-Requested-With': 'XMLHttpRequest',
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams({width, height}),
+        }).catch(() => {});
+    }
+
+    window.addEventListener('mouseup', () => {
+        if (activeNote && isDragging) {
+            sendPositionUpdate(activeNote);
+        }
+        if (activeNote && isResizing) {
+            sendSizeUpdate(activeNote);
+        }
+        isDragging = false;
+        isResizing = false;
+        activeNote = null;
+    });
+
+    // Modal handling
+    const modal = document.getElementById('note-modal');
+    const modalClose = document.getElementById('modal-close');
+    const modalCancel = document.getElementById('modal-cancel');
+    const modalDelete = document.getElementById('modal-delete');
+    const noteForm = document.getElementById('note-form');
+    const deleteForm = document.getElementById('note-delete-form');
+    const modalIdInput = document.getElementById('modal-note-id');
+    const modalTitleInput = document.getElementById('modal-title');
+    const modalContentInput = document.getElementById('modal-content');
+    const modalColorInput = document.getElementById('modal-color');
+    const modalTagsInput = document.getElementById('modal-tags');
+    const modalMeta = document.getElementById('modal-meta');
+
+    function openModal(trigger) {
+        const id = trigger.dataset.noteId;
+        modalIdInput.value = id;
+        modalTitleInput.value = trigger.dataset.title || '';
+        modalContentInput.value = trigger.dataset.content || '';
+        modalColorInput.value = trigger.dataset.color || '#FFF176';
+        modalTagsInput.value = trigger.dataset.tags || '';
+        modalMeta.textContent = trigger.dataset.lastEdited
+            ? `Last edited ${trigger.dataset.lastEdited}`
+            : '';
+        noteForm.action = `/notes/${id}/update/`;
+        deleteForm.action = `/notes/${id}/delete/`;
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+
+    function closeModal() {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+
+    document.querySelectorAll('.open-note').forEach(btn => {
+        btn.addEventListener('click', () => openModal(btn));
+    });
+
+    modalClose?.addEventListener('click', closeModal);
+    modalCancel?.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
+
+    modalDelete?.addEventListener('click', () => {
+        deleteForm.submit();
+    });
+    
+    // Quick tag selector UX
+    const quickTagsToggle = document.getElementById('quick-tags-toggle');
+    const quickTagsMenu = document.getElementById('quick-tags-menu');
+    const quickTagsInput = document.getElementById('quick-tags-input');
+
+    function addTagToInput(input, tag) {
+        const current = input.value.trim();
+        if (!current) {
+            input.value = tag;
+            return;
+        }
+        const parts = current.split(',').map(t => t.trim()).filter(Boolean);
+        if (!parts.includes(tag)) {
+            parts.push(tag);
+            input.value = parts.join(', ');
+        }
+    }
+
+    quickTagsToggle?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        quickTagsMenu?.classList.toggle('hidden');
+    });
+
+    quickTagsMenu?.querySelectorAll('.tag-option').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const tag = btn.dataset.tag;
+            if (quickTagsInput && tag) {
+                addTagToInput(quickTagsInput, tag);
+                quickTagsInput.focus();
+            }
+            if (quickTagsMenu) {
+                quickTagsMenu.classList.add('hidden');
+            }
+        });
+    });
+
+    window.addEventListener('click', (e) => {
+        if (!quickTagsMenu || !quickTagsToggle) return;
+        if (!quickTagsMenu.contains(e.target) && e.target !== quickTagsToggle) {
+            quickTagsMenu.classList.add('hidden');
+        }
+    });
+</script>
+{% endblock %}
+
+

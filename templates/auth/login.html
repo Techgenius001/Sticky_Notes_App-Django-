@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Login · Midnight Notes{% endblock %}
+{% block content %}
+<div class="min-h-[calc(100vh-56px)] flex items-center justify-center px-4">
+    <div class="w-full max-w-md rounded-2xl border border-neutral-800 bg-[#1E1E1E]/90 shadow-xl shadow-black/60 p-6 auth-card">
+        <h1 class="text-lg font-semibold mb-1">Welcome back</h1>
+        <p class="text-xs text-neutral-400 mb-6">Sign in to your midnight workspace.</p>
+        <form method="post" class="space-y-4 text-sm" id="login-form">
+            {% csrf_token %}
+            {% for field in form %}
+                <div class="space-y-1">
+                    <label class="block text-xs text-neutral-300">{{ field.label }}</label>
+                    {% if field.name == 'password' %}
+                        <div class="relative">
+                            {{ field }}
+                            <button type="button"
+                                    class="password-toggle absolute inset-y-0 right-2 flex items-center text-[11px] text-neutral-400 hover:text-neutral-200"
+                                    data-target-id="{{ field.id_for_label }}">
+                                👁
+                            </button>
+                        </div>
+                    {% else %}
+                        {{ field }}
+                    {% endif %}
+                    {% if field.errors %}
+                        <p class="text-[11px] text-red-400">{{ field.errors|striptags }}</p>
+                    {% endif %}
+                </div>
+            {% endfor %}
+            {% if form.non_field_errors %}
+                <p class="text-[11px] text-red-400">{{ form.non_field_errors|striptags }}</p>
+            {% endif %}
+            <button type="submit" class="w-full mt-3 inline-flex items-center justify-center rounded-lg bg-[#4F8CFF] px-4 py-2.5 text-xs font-medium text-white hover:bg-[#3b6fd1] transition-colors">
+                Sign in
+            </button>
+        </form>
+        <p class="mt-4 text-[11px] text-neutral-400">
+            New here?
+            <a href="{% url 'signup' %}" class="text-[#4F8CFF] hover:underline">Create an account</a>
+        </p>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_body %}
+{{ block.super }}
+<script>
+    document.querySelectorAll('.password-toggle').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const input = document.getElementById(btn.dataset.targetId);
+            if (!input) return;
+            input.type = input.type === 'password' ? 'text' : 'password';
+        });
+    });
+</script>
+{% endblock %}
+
+
