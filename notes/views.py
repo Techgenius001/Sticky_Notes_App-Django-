@@ -5,13 +5,21 @@ from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.http import HttpRequest, HttpResponse, JsonResponse, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
+from django_ratelimit.decorators import ratelimit
 
 from .models import Board, Note
 
 
+@ratelimit(key='ip', rate='5/h', method='POST')
 def signup_view(request: HttpRequest) -> HttpResponse:
     if request.user.is_authenticated:
         return redirect("dashboard")
+    
+    # Check if rate limited
+    if getattr(request, 'limited', False):
+        messages.error(request, "Too many signup attempts. Please try again later.")
+        return render(request, "auth/signup.html", {"form": UserCreationForm()})
+    
     form = UserCreationForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
         user = form.save()
@@ -20,9 +28,16 @@ def signup_view(request: HttpRequest) -> HttpResponse:
     return render(request, "auth/signup.html", {"form": form})
 
 
+@ratelimit(key='ip', rate='10/h', method='POST')
 def login_view(request: HttpRequest) -> HttpResponse:
     if request.user.is_authenticated:
         return redirect("dashboard")
+    
+    # Check if rate limited
+    if getattr(request, 'limited', False):
+        messages.error(request, "Too many login attempts. Please try again later.")
+        return render(request, "auth/login.html", {"form": AuthenticationForm()})
+    
     form = AuthenticationForm(request, data=request.POST or None)
     if request.method == "POST" and form.is_valid():
         user = form.get_user()
