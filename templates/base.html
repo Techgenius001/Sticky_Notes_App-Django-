@@ -73,8 +73,66 @@
         box-shadow: 0 0 0 1px #4f8cff33;
       }
       .note-handle {
-        cursor: move;
+        cursor: grab;
       }
+      .note-handle:active {
+        cursor: grabbing;
+      }
+      .note.dragging {
+        opacity: 0.5;
+        cursor: grabbing;
+      }
+      #delete-zone {
+        pointer-events: none;
+      }
+      #delete-zone.active {
+        opacity: 1;
+      }
+      #delete-zone.drag-over {
+        background: linear-gradient(to top, rgba(239, 68, 68, 0.2), transparent);
+        border-top: 3px solid #ef4444;
+        box-shadow: 0 -4px 20px rgba(239, 68, 68, 0.3);
+      }
+      #delete-zone.drag-over svg,
+      #delete-zone.drag-over span {
+        color: #ef4444;
+        animation: pulse 1s ease-in-out infinite;
+      }
+      @keyframes pulse {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.8; transform: scale(1.05); }
+      }
+      @keyframes slide-down {
+        from {
+          opacity: 0;
+          transform: translateY(-10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      @keyframes fade-out {
+        from {
+          opacity: 1;
+        }
+        to {
+          opacity: 0;
+        }
+      }
+      .animate-slide-down {
+        animation: slide-down 0.3s ease-out;
+      }
+      .toast-message {
+        transition: opacity 0.3s ease-out;
+      }
+      body.dragging-note {
+        cursor: grabbing !important;
+      }
+      body.dragging-note * {
+        cursor: grabbing !important;
+      }
+
       .note-resize {
         cursor: se-resize;
       }
@@ -92,12 +150,60 @@
       .note-content p {
         margin: 0;
       }
+      .note-content[contenteditable]:empty:before,
+      .note-content.empty:before {
+        content: attr(data-placeholder);
+        color: rgba(0, 0, 0, 0.3);
+        font-style: italic;
+      }
+      .note-content[contenteditable]:focus {
+        outline: none;
+      }
+      /* Custom scrollbar for notes */
+      .note-content::-webkit-scrollbar {
+        width: 6px;
+      }
+      .note-content::-webkit-scrollbar-track {
+        background: rgba(0, 0, 0, 0.1);
+        border-radius: 3px;
+      }
+      .note-content::-webkit-scrollbar-thumb {
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 3px;
+      }
+      .note-content::-webkit-scrollbar-thumb:hover {
+        background: rgba(0, 0, 0, 0.5);
+      }
+      /* Firefox scrollbar */
+      .note-content {
+        scrollbar-width: thin;
+        scrollbar-color: rgba(0, 0, 0, 0.3) rgba(0, 0, 0, 0.1);
+      }
+      /* Hide board scrollbar completely */
+      #board::-webkit-scrollbar {
+        display: none;
+      }
+      #board {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
     </style>
     {% block extra_head %}{% endblock %}
   </head>
   <body class="h-full bg-[#121212] text-[#F1F1F1]">
     <div class="min-h-screen flex flex-col">
-      <header class="border-b border-neutral-800 bg-[#121212]/95 backdrop-blur">
+      <header class="border-b border-neutral-800 bg-[#121212]/95 backdrop-blur relative">
+        <!-- Toast Messages -->
+        {% if messages %}
+        <div id="toast-container" class="absolute left-1/2 transform -translate-x-1/2 top-3 z-50">
+          {% for message in messages %}
+          <div class="toast-message bg-[#1E1E1E] border border-neutral-700 rounded-lg px-4 py-2 shadow-lg text-xs text-neutral-200 mb-2 animate-slide-down">
+            {{ message }}
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+        
         <div
           class="max-w-6xl mx-auto flex items-center justify-between py-3 px-4 gap-3"
         >
@@ -150,19 +256,25 @@
         </div>
       </header>
       <main class="flex-1">
-        {% if messages %}
-        <div class="max-w-6xl mx-auto mt-3 px-4 space-y-2">
-          {% for message in messages %}
-          <div
-            class="text-xs rounded-md border border-neutral-700 bg-neutral-900/80 px-3 py-2 text-neutral-200"
-          >
-            {{ message }}
-          </div>
-          {% endfor %}
-        </div>
-        {% endif %} {% block content %}{% endblock %}
+        {% block content %}{% endblock %}
       </main>
     </div>
+    
+    <script>
+      // Auto-dismiss toast messages after 3 seconds
+      document.addEventListener('DOMContentLoaded', function() {
+        const toasts = document.querySelectorAll('.toast-message');
+        toasts.forEach(toast => {
+          setTimeout(() => {
+            toast.style.animation = 'fade-out 0.3s ease-out';
+            setTimeout(() => {
+              toast.remove();
+            }, 300);
+          }, 3000);
+        });
+      });
+    </script>
+    
     {% block extra_body %}{% endblock %}
   </body>
 </html>

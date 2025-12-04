@@ -1,206 +1,182 @@
 {% extends "base.html" %}
 {% block title %}Dashboard · Midnight Notes{% endblock %}
 {% block content %}
-<div class="max-w-6xl mx-auto py-4 px-4 space-y-4">
-  <div
-    class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3"
-  >
-    <div>
-      <h1 class="text-sm font-semibold">Board</h1>
-      <p class="text-[11px] text-neutral-400 hidden sm:block">
-        Drag notes freely. Changes are saved automatically.
-      </p>
-    </div>
-    <form
-      method="post"
-      action="{% url 'create_note' %}"
-      class="flex flex-col sm:flex-row sm:flex-wrap lg:flex-nowrap items-stretch sm:items-center gap-2 text-xs"
-      id="quick-note-form"
-    >
-      {% csrf_token %}
-      <input
-        name="title"
-        placeholder="New note title"
-        required
-        class="w-full sm:w-40 rounded-md border border-neutral-700 bg-neutral-900/70 px-2 py-1.5 text-[11px] focus:outline-none focus:border-[#4F8CFF]"
-      />
-      <select
-        name="color"
-        class="w-full sm:w-auto rounded-md border border-neutral-700 bg-neutral-900/70 px-2 py-1.5 text-[11px] focus:outline-none focus:border-[#4F8CFF]"
-      >
-        <option value="#FFF176">Electric Yellow</option>
-        <option value="#C7A4FF">Soft Purple</option>
-        <option value="#FF8A80">Soft Coral</option>
-        <option value="#A5D6A7">Mint</option>
-        <option value="#80CBC4">Teal</option>
-      </select>
-      <div class="relative w-full sm:w-40">
-        <input
-          id="quick-tags-input"
-          name="tags"
-          placeholder="tags (comma,separated)"
-          class="w-full rounded-md border border-neutral-700 bg-neutral-900/70 px-2 py-1.5 text-[11px] focus:outline-none focus:border-[#4F8CFF]"
-        />
-        <button
-          type="button"
-          id="quick-tags-toggle"
-          class="absolute inset-y-0 right-1 flex items-center text-[11px] text-neutral-400 hover:text-neutral-100 px-1"
-        >
-          ▾
-        </button>
-        <div
-          id="quick-tags-menu"
-          class="hidden absolute right-0 mt-1 w-full sm:w-40 rounded-md border border-neutral-800 bg-[#1E1E1E] shadow-lg text-[11px] text-neutral-200 z-20"
-        >
-          <button
-            type="button"
-            class="tag-option w-full text-left px-3 py-1 hover:bg-neutral-800"
-            data-tag="work"
-          >
-            work
-          </button>
-          <button
-            type="button"
-            class="tag-option w-full text-left px-3 py-1 hover:bg-neutral-800"
-            data-tag="idea"
-          >
-            idea
-          </button>
-          <button
-            type="button"
-            class="tag-option w-full text-left px-3 py-1 hover:bg-neutral-800"
-            data-tag="focus"
-          >
-            focus
-          </button>
-          <button
-            type="button"
-            class="tag-option w-full text-left px-3 py-1 hover:bg-neutral-800"
-            data-tag="personal"
-          >
-            personal
-          </button>
-          <button
-            type="button"
-            class="tag-option w-full text-left px-3 py-1 hover:bg-neutral-800"
-            data-tag="todo"
-          >
-            todo
-          </button>
-        </div>
-      </div>
-      <button
-        type="submit"
-        class="w-full sm:w-auto inline-flex items-center justify-center gap-1 rounded-md bg-[#4F8CFF] px-3 py-1.5 text-[11px] font-medium text-white hover:bg-[#3b6fd1] transition-colors"
-      >
-        + Add note
-      </button>
-    </form>
-  </div>
 
-  <div
-    id="board"
-    class="relative rounded-2xl border border-neutral-800 bg-gradient-to-b from-[#1E1E1E] to-[#121212] min-h-[400px] sm:min-h-[520px] overflow-hidden touch-none"
-  >
-    {% for note in notes %}
-    <div
-      class="note absolute rounded-xl shadow-md shadow-black/50 text-xs flex flex-col"
-      data-id="{{ note.id }}"
-      style="left: {{ note.x }}px; top: {{ note.y }}px; width: {{ note.width }}px; height: {{ note.height }}px; background-color: {{ note.color }};"
-    >
-      <div
-        class="note-handle flex items-center justify-between px-3 py-2 text-[11px] font-medium text-neutral-900/90 cursor-move flex-shrink-0"
-      >
-        <span class="truncate max-w-[100px] sm:max-w-[150px]"
-          >{{ note.title }}</span
-        >
-        <div class="flex items-center gap-1">
-          {% if note.tags %}
-          <span
-            class="hidden sm:inline rounded-full bg-black/10 px-2 py-0.5 text-[10px] text-neutral-900/80"
-            >{{ note.tags }}</span
-          >
-          {% endif %}
-          <button
-            type="button"
-            class="open-note inline-flex items-center justify-center w-6 h-6 rounded-full bg-black/5 hover:bg-black/10 text-[14px] text-neutral-900/80 hover:text-black"
-            data-note-id="{{ note.id }}"
-            data-title="{{ note.title|escape }}"
-            data-content="{{ note.content|escape }}"
-            data-color="{{ note.color }}"
-            data-tags="{{ note.tags|default_if_none:''|escape }}"
-            data-last-edited="{{ note.last_edited|date:'M j, H:i' }}"
-          >
-            ⋮
-          </button>
-        </div>
-      </div>
-      <div
-        class="note-content px-3 py-2 text-[11px] text-neutral-900/90 leading-snug overflow-auto flex-1"
-      >
-        <p class="whitespace-pre-wrap break-words">{{ note.content|default:"(no content yet)" }}</p>
-      </div>
-      <div
-        class="note-resize absolute bottom-1 right-1 w-3 h-3 border-r-2 border-b-2 border-neutral-900/50 cursor-se-resize"
-      ></div>
+<!-- Mobile Notice -->
+<div class="md:hidden fixed inset-0 bg-[#121212] z-50 flex items-center justify-center p-6">
+  <div class="max-w-sm text-center">
+    <div class="w-16 h-16 mx-auto mb-4 rounded-xl bg-gradient-to-br from-[#4F8CFF] to-[#C7A4FF] flex items-center justify-center">
+      <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+      </svg>
     </div>
-    {% empty %}
-    <div
-      class="absolute inset-0 flex items-center justify-center text-xs text-neutral-500 px-4 text-center"
-    >
-      No notes yet. Create your first idea above.
+    <h2 class="text-lg font-semibold text-[#F1F1F1] mb-2">Best on Larger Screens</h2>
+    <p class="text-sm text-neutral-400 mb-6">Midnight Notes works best on tablets and desktop devices. For the optimal drag-and-drop experience, please use a larger screen.</p>
+    <div class="space-y-2 text-xs text-neutral-500">
+      <p>✓ Full board management</p>
+      <p>✓ Drag & drop notes</p>
+      <p>✓ Multi-board support</p>
     </div>
-    {% endfor %}
+    <a href="{% url 'logout' %}" class="mt-6 inline-block px-4 py-2 rounded-md bg-neutral-800 text-neutral-200 text-xs hover:bg-neutral-700 transition-colors">Logout</a>
   </div>
 </div>
 
-<!-- Modal -->
-<div
-  id="note-modal"
-  class="fixed inset-0 z-40 hidden items-center justify-center bg-black/70 p-4"
->
-  <div
-    class="w-full max-w-lg rounded-2xl border border-neutral-800 bg-[#1E1E1E] shadow-2xl shadow-black/70 p-4 sm:p-5 text-xs max-h-[90vh] overflow-y-auto"
-  >
+<div class="flex h-[calc(100vh-80px)]">
+  <!-- Sidebar -->
+  <aside class="w-64 border-r border-neutral-800 bg-[#1E1E1E] p-4 overflow-y-auto hidden md:block">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-sm font-semibold text-neutral-200">Boards</h2>
+      <button type="button" id="new-board-btn" class="text-[#4F8CFF] hover:text-[#3b6fd1] text-xl leading-none">+</button>
+    </div>
+    <nav class="space-y-1">
+      {% for board in boards %}
+      <div class="relative group">
+        <a href="{% url 'board_detail' board.id %}" class="flex items-center justify-between px-3 py-2 rounded-md text-xs {% if board.id == current_board.id %}bg-[#4F8CFF]/20 text-[#4F8CFF]{% else %}text-neutral-400 hover:bg-neutral-800 hover:text-neutral-200{% endif %}">
+          <span class="truncate">{{ board.name }}</span>
+          <button type="button" class="board-options-btn opacity-0 group-hover:opacity-100 text-neutral-400 hover:text-neutral-200 ml-2" data-board-id="{{ board.id }}" data-board-name="{{ board.name }}" onclick="event.preventDefault(); event.stopPropagation();">⋮</button>
+        </a>
+        <div class="board-options-menu hidden absolute right-0 mt-1 w-32 rounded-md border border-neutral-800 bg-[#1E1E1E] shadow-lg text-[11px] text-neutral-200 z-20" data-board-id="{{ board.id }}">
+          <button type="button" class="rename-board-btn w-full text-left px-3 py-2 hover:bg-neutral-800" data-board-id="{{ board.id }}" data-board-name="{{ board.name }}">Rename</button>
+          <button type="button" class="delete-board-btn w-full text-left px-3 py-2 hover:bg-neutral-800 text-red-400" data-board-id="{{ board.id }}">Delete</button>
+        </div>
+      </div>
+      {% endfor %}
+    </nav>
+  </aside>
+
+  <!-- Mobile board selector -->
+  <div class="md:hidden fixed top-16 left-0 right-0 bg-[#1E1E1E] border-b border-neutral-800 px-4 py-2 z-10">
+    <select id="mobile-board-select" class="w-full rounded-md border border-neutral-700 bg-neutral-900/70 px-2 py-1.5 text-[11px] text-neutral-200">
+      {% for board in boards %}
+      <option value="{{ board.id }}" {% if board.id == current_board.id %}selected{% endif %}>{{ board.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <!-- Main content -->
+  <div class="flex-1 overflow-auto">
+    <div class="max-w-6xl mx-auto py-4 px-4 pr-8 space-y-4 md:mt-0 mt-12">
+      <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+        <div>
+          <h1 class="text-sm font-semibold">{{ current_board.name }}</h1>
+          <p class="text-[11px] text-neutral-400 hidden sm:block">Drag notes freely. Changes are saved automatically.</p>
+        </div>
+        <form method="post" action="{% url 'create_note' %}" class="flex flex-col sm:flex-row sm:flex-wrap lg:flex-nowrap items-stretch sm:items-center gap-2 text-xs relative" id="quick-note-form" novalidate>
+          {% csrf_token %}
+          <input type="hidden" name="board_id" value="{{ current_board.id }}" />
+          <input name="title" placeholder="New note title" class="w-full sm:w-40 rounded-md border border-neutral-700 bg-neutral-900/70 px-2 py-1.5 text-[11px] focus:outline-none focus:border-[#4F8CFF]" />
+          <select name="color" class="w-full sm:w-auto rounded-md border border-neutral-700 bg-neutral-900/70 px-2 py-1.5 text-[11px] focus:outline-none focus:border-[#4F8CFF]">
+            <option value="#FFF176">Electric Yellow</option>
+            <option value="#C7A4FF">Soft Purple</option>
+            <option value="#FF8A80">Soft Coral</option>
+            <option value="#A5D6A7">Mint</option>
+            <option value="#80CBC4">Teal</option>
+          </select>
+          <select name="tag" class="w-full sm:w-auto rounded-md border border-neutral-700 bg-neutral-900/70 px-2 py-1.5 text-[11px] focus:outline-none focus:border-[#4F8CFF]">
+            <option value="">No tag</option>
+            <option value="work">Work</option>
+            <option value="idea">Idea</option>
+            <option value="focus">Focus</option>
+            <option value="personal">Personal</option>
+            <option value="todo">To Do</option>
+          </select>
+          <button type="submit" class="w-full sm:w-auto inline-flex items-center justify-center gap-1 rounded-md bg-[#4F8CFF] px-3 py-1.5 text-[11px] font-medium text-white hover:bg-[#3b6fd1] transition-colors">+ Add note</button>
+        </form>
+      </div>
+
+      <div id="board" class="relative rounded-2xl border border-neutral-800 bg-gradient-to-b from-[#1E1E1E] to-[#121212] min-h-[400px] sm:min-h-[520px] overflow-hidden touch-none">
+        {% for note in notes %}
+        <div class="note absolute rounded-xl shadow-md shadow-black/50 text-xs flex flex-col" data-id="{{ note.id }}" style="left: {{ note.x }}px; top: {{ note.y }}px; width: {{ note.width }}px; height: {{ note.height }}px; background-color: {{ note.color }}; z-index: {{ forloop.counter }};">
+          <div class="note-handle flex items-center justify-between px-3 py-2 text-[11px] font-medium text-neutral-900/90 cursor-move flex-shrink-0">
+            <span class="truncate max-w-[100px] sm:max-w-[150px]">{{ note.title }}</span>
+            <div class="flex items-center gap-1">
+              {% if note.tag %}
+              <span class="hidden sm:inline rounded-full bg-black/10 px-2 py-0.5 text-[10px] text-neutral-900/80 capitalize">{{ note.tag }}</span>
+              {% endif %}
+              <button type="button" class="open-note inline-flex items-center justify-center w-6 h-6 rounded-full bg-black/5 hover:bg-black/10 text-[14px] text-neutral-900/80 hover:text-black" data-note-id="{{ note.id }}" data-title="{{ note.title|escape }}" data-content="{{ note.content|escape }}" data-color="{{ note.color }}" data-tag="{{ note.tag|default_if_none:''|escape }}" data-last-edited="{{ note.last_edited|date:'M j, H:i' }}">⋮</button>
+            </div>
+          </div>
+          <div class="note-content px-3 py-2 text-[11px] text-neutral-900/90 leading-snug overflow-auto flex-1" contenteditable="true" data-note-id="{{ note.id }}" data-placeholder="Click to add content...">{{ note.content }}</div>
+          <div class="note-resize absolute bottom-1 right-1 w-3 h-3 border-r-2 border-b-2 border-neutral-900/50 cursor-se-resize"></div>
+        </div>
+        {% empty %}
+        <div class="absolute inset-0 flex items-center justify-center text-xs text-neutral-500 px-4 text-center">No notes yet. Create your first idea above.</div>
+        {% endfor %}
+        
+        <!-- Delete Zone - Bottom Border -->
+        <div id="delete-zone" class="absolute bottom-0 left-0 right-0 h-16 flex items-center justify-center opacity-0 transition-all duration-300">
+          <div class="flex items-center gap-2 text-neutral-500">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+            </svg>
+            <span class="text-xs font-medium">Drop to delete note</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- New Board Modal -->
+<div id="new-board-modal" class="fixed inset-0 z-40 hidden items-center justify-center bg-black/70 p-4">
+  <div class="w-full max-w-sm rounded-2xl border border-neutral-800 bg-[#1E1E1E] shadow-2xl shadow-black/70 p-4 sm:p-5 text-xs">
     <div class="flex items-center justify-between mb-3">
-      <h2 class="text-sm font-semibold">Edit note</h2>
-      <button
-        type="button"
-        id="modal-close"
-        class="text-neutral-400 hover:text-neutral-200 text-sm"
-      >
-        ✕
-      </button>
+      <h2 class="text-sm font-semibold">New Board</h2>
+      <button type="button" id="new-board-close" class="text-neutral-400 hover:text-neutral-200 text-sm">✕</button>
+    </div>
+    <form method="post" action="{% url 'create_board' %}">
+      {% csrf_token %}
+      <div class="space-y-3">
+        <input type="text" name="name" placeholder="Board name" required class="w-full rounded-md border border-neutral-700 bg-neutral-900/60 px-2 py-1.5 text-[11px] focus:outline-none focus:border-[#4F8CFF]" />
+        <div class="flex items-center gap-2">
+          <button type="button" id="new-board-cancel" class="flex-1 rounded-md border border-neutral-700 px-3 py-1.5 text-[11px] text-neutral-200 hover:bg-neutral-800/80">Cancel</button>
+          <button type="submit" class="flex-1 rounded-md bg-[#4F8CFF] px-3 py-1.5 text-[11px] font-medium text-white hover:bg-[#3b6fd1]">Create</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Rename Board Modal -->
+<div id="rename-board-modal" class="fixed inset-0 z-40 hidden items-center justify-center bg-black/70 p-4">
+  <div class="w-full max-w-sm rounded-2xl border border-neutral-800 bg-[#1E1E1E] shadow-2xl shadow-black/70 p-4 sm:p-5 text-xs">
+    <div class="flex items-center justify-between mb-3">
+      <h2 class="text-sm font-semibold">Rename Board</h2>
+      <button type="button" id="rename-board-close" class="text-neutral-400 hover:text-neutral-200 text-sm">✕</button>
+    </div>
+    <form id="rename-board-form" method="post">
+      {% csrf_token %}
+      <div class="space-y-3">
+        <input type="text" id="rename-board-input" name="name" placeholder="Board name" required class="w-full rounded-md border border-neutral-700 bg-neutral-900/60 px-2 py-1.5 text-[11px] focus:outline-none focus:border-[#4F8CFF]" />
+        <div class="flex items-center gap-2">
+          <button type="button" id="rename-board-cancel" class="flex-1 rounded-md border border-neutral-700 px-3 py-1.5 text-[11px] text-neutral-200 hover:bg-neutral-800/80">Cancel</button>
+          <button type="submit" class="flex-1 rounded-md bg-[#4F8CFF] px-3 py-1.5 text-[11px] font-medium text-white hover:bg-[#3b6fd1]">Rename</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Note Settings Modal -->
+<div id="note-modal" class="fixed inset-0 z-[9999] hidden bg-black/70 p-4">
+  <div id="note-modal-content" class="absolute w-full max-w-sm rounded-2xl border border-neutral-800 bg-[#1E1E1E] shadow-2xl shadow-black/70 p-4 sm:p-5 text-xs max-h-[90vh] overflow-y-auto z-[10000]">
+    <div class="flex items-center justify-between mb-3">
+      <h2 class="text-sm font-semibold">Note Settings</h2>
+      <button type="button" id="modal-close" class="text-neutral-400 hover:text-neutral-200 text-sm">✕</button>
     </div>
     <form id="note-form" method="post">
       {% csrf_token %}
       <input type="hidden" name="note_id" id="modal-note-id" />
-      <div class="space-y-2">
+      <input type="hidden" name="content" id="modal-content-hidden" />
+      <div class="space-y-3">
         <div>
           <label class="block text-[11px] text-neutral-300 mb-1">Title</label>
-          <input
-            id="modal-title"
-            name="title"
-            class="w-full rounded-md border border-neutral-700 bg-neutral-900/60 px-2 py-1.5 text-[11px] focus:outline-none focus:border-[#4F8CFF]"
-          />
-        </div>
-        <div>
-          <label class="block text-[11px] text-neutral-300 mb-1">Content</label>
-          <textarea
-            id="modal-content"
-            name="content"
-            rows="5"
-            class="w-full rounded-md border border-neutral-700 bg-neutral-900/60 px-2 py-1.5 text-[11px] focus:outline-none focus:border-[#4F8CFF]"
-          ></textarea>
+          <input id="modal-title" name="title" class="w-full rounded-md border border-neutral-700 bg-neutral-900/60 px-2 py-1.5 text-[11px] focus:outline-none focus:border-[#4F8CFF]" />
         </div>
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="block text-[11px] text-neutral-300 mb-1">Color</label>
-            <select
-              id="modal-color"
-              name="color"
-              class="w-full rounded-md border border-neutral-700 bg-neutral-900/60 px-2 py-1.5 text-[11px] focus:outline-none focus:border-[#4F8CFF]"
-            >
+            <select id="modal-color" name="color" class="w-full rounded-md border border-neutral-700 bg-neutral-900/60 px-2 py-1.5 text-[11px] focus:outline-none focus:border-[#4F8CFF]">
               <option value="#FFF176">Electric Yellow</option>
               <option value="#C7A4FF">Soft Purple</option>
               <option value="#FF8A80">Soft Coral</option>
@@ -209,41 +185,24 @@
             </select>
           </div>
           <div>
-            <label class="block text-[11px] text-neutral-300 mb-1">Tags</label>
-            <input
-              id="modal-tags"
-              name="tags"
-              class="w-full rounded-md border border-neutral-700 bg-neutral-900/60 px-2 py-1.5 text-[11px] focus:outline-none focus:border-[#4F8CFF]"
-              placeholder="work, idea, focus"
-            />
+            <label class="block text-[11px] text-neutral-300 mb-1">Tag</label>
+            <select id="modal-tag" name="tag" class="w-full rounded-md border border-neutral-700 bg-neutral-900/60 px-2 py-1.5 text-[11px] focus:outline-none focus:border-[#4F8CFF]">
+              <option value="">No tag</option>
+              <option value="work">Work</option>
+              <option value="idea">Idea</option>
+              <option value="focus">Focus</option>
+              <option value="personal">Personal</option>
+              <option value="todo">To Do</option>
+            </select>
           </div>
         </div>
-        <p id="modal-meta" class="text-[10px] text-neutral-500 mt-1"></p>
+        <p id="modal-meta" class="text-[10px] text-neutral-500"></p>
       </div>
-      <div
-        class="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
-      >
-        <button
-          type="button"
-          id="modal-delete"
-          class="text-[11px] text-red-400 hover:text-red-300 text-left sm:text-center"
-        >
-          Delete note
-        </button>
+      <div class="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <button type="button" id="modal-delete" class="text-[11px] text-red-400 hover:text-red-300 text-left sm:text-center">Delete note</button>
         <div class="flex items-center gap-2">
-          <button
-            type="button"
-            id="modal-cancel"
-            class="flex-1 sm:flex-none rounded-md border border-neutral-700 px-3 py-1.5 text-[11px] text-neutral-200 hover:bg-neutral-800/80"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            class="flex-1 sm:flex-none rounded-md bg-[#4F8CFF] px-3 py-1.5 text-[11px] font-medium text-white hover:bg-[#3b6fd1]"
-          >
-            Save changes
-          </button>
+          <button type="button" id="modal-cancel" class="flex-1 sm:flex-none rounded-md border border-neutral-700 px-3 py-1.5 text-[11px] text-neutral-200 hover:bg-neutral-800/80">Cancel</button>
+          <button type="submit" class="flex-1 sm:flex-none rounded-md bg-[#4F8CFF] px-3 py-1.5 text-[11px] font-medium text-white hover:bg-[#3b6fd1]">Save changes</button>
         </div>
       </div>
     </form>
@@ -256,233 +215,429 @@
 
 {% block extra_body %}
 <script>
-  function getCSRFToken() {
-    const name = "csrftoken";
-    const cookies = document.cookie ? document.cookie.split(";") : [];
-    for (let cookie of cookies) {
-      cookie = cookie.trim();
-      if (cookie.startsWith(name + "=")) {
-        return decodeURIComponent(cookie.substring(name.length + 1));
+function getCSRFToken() {
+  const name = 'csrftoken';
+  const cookies = document.cookie ? document.cookie.split(';') : [];
+  for (let cookie of cookies) {
+    cookie = cookie.trim();
+    if (cookie.startsWith(name + '=')) {
+      return decodeURIComponent(cookie.substring(name.length + 1));
+    }
+  }
+  return '';
+}
+
+const csrfToken = getCSRFToken();
+const board = document.getElementById('board');
+const deleteZone = document.getElementById('delete-zone');
+let activeNote = null;
+let isDragging = false;
+let isResizing = false;
+let offsetX = 0;
+let offsetY = 0;
+let startWidth = 0;
+let startHeight = 0;
+let startMouseX = 0;
+let startMouseY = 0;
+
+function handleStart(e) {
+  if (e.target.closest('button') || e.target.closest('input') || e.target.closest('select')) {
+    return;
+  }
+
+  const noteEl = e.target.closest('.note');
+  if (!noteEl) return;
+
+  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+  const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+  if (e.target.classList.contains('note-resize')) {
+    isResizing = true;
+    activeNote = noteEl;
+    const rect = noteEl.getBoundingClientRect();
+    startWidth = rect.width;
+    startHeight = rect.height;
+    startMouseX = clientX;
+    startMouseY = clientY;
+    e.preventDefault();
+    return;
+  }
+  if (e.target.closest('.note-handle')) {
+    isDragging = true;
+    activeNote = noteEl;
+    const rect = noteEl.getBoundingClientRect();
+    offsetX = clientX - rect.left;
+    offsetY = clientY - rect.top;
+    noteEl.style.zIndex = String(Date.now());
+    noteEl.classList.add('dragging');
+    document.body.classList.add('dragging-note');
+    deleteZone?.classList.add('active');
+    e.preventDefault();
+  }
+}
+
+function handleMove(e) {
+  if (!activeNote) return;
+
+  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+  const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+  const boardRect = board.getBoundingClientRect();
+
+  if (isDragging) {
+    let x = clientX - boardRect.left - offsetX;
+    let y = clientY - boardRect.top - offsetY;
+    x = Math.max(0, Math.min(x, boardRect.width - activeNote.offsetWidth));
+    y = Math.max(0, Math.min(y, boardRect.height - activeNote.offsetHeight));
+    activeNote.style.left = x + 'px';
+    activeNote.style.top = y + 'px';
+    
+    if (deleteZone) {
+      const boardRect = board.getBoundingClientRect();
+      const noteRect = activeNote.getBoundingClientRect();
+      const deleteZoneTop = boardRect.bottom - 64; // 64px is the delete zone height
+      
+      if (noteRect.bottom > deleteZoneTop) {
+        deleteZone.classList.add('drag-over');
+      } else {
+        deleteZone.classList.remove('drag-over');
       }
     }
-    return "";
+  } else if (isResizing) {
+    let newWidth = startWidth + (clientX - startMouseX);
+    let newHeight = startHeight + (clientY - startMouseY);
+    newWidth = Math.max(160, newWidth);
+    newHeight = Math.max(160, newHeight);
+    activeNote.style.width = newWidth + 'px';
+    activeNote.style.height = newHeight + 'px';
   }
+}
 
-  const csrfToken = getCSRFToken();
-  const board = document.getElementById("board");
-  let activeNote = null;
-  let isDragging = false;
-  let isResizing = false;
-  let offsetX = 0;
-  let offsetY = 0;
-  let startWidth = 0;
-  let startHeight = 0;
-  let startMouseX = 0;
-  let startMouseY = 0;
+board?.addEventListener('mousedown', handleStart);
+board?.addEventListener('touchstart', handleStart, { passive: false });
 
-  function handleStart(e) {
-    // Don't interfere with buttons or interactive elements
-    if (e.target.closest('button') || e.target.closest('input') || e.target.closest('select')) {
-      return;
-    }
+window.addEventListener('mousemove', handleMove);
+window.addEventListener('touchmove', handleMove, { passive: false });
 
-    const noteEl = e.target.closest(".note");
-    if (!noteEl) return;
+function sendPositionUpdate(noteEl) {
+  const id = noteEl.dataset.id;
+  const x = parseInt(noteEl.style.left, 10) || 0;
+  const y = parseInt(noteEl.style.top, 10) || 0;
+  fetch(`/notes/${id}/position/`, {
+    method: 'POST',
+    headers: {
+      'X-CSRFToken': csrfToken,
+      'X-Requested-With': 'XMLHttpRequest',
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: new URLSearchParams({x, y}),
+  }).catch(() => {});
+}
 
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+function sendSizeUpdate(noteEl) {
+  const id = noteEl.dataset.id;
+  const width = parseInt(noteEl.style.width, 10) || 200;
+  const height = parseInt(noteEl.style.height, 10) || 200;
+  fetch(`/notes/${id}/size/`, {
+    method: 'POST',
+    headers: {
+      'X-CSRFToken': csrfToken,
+      'X-Requested-With': 'XMLHttpRequest',
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: new URLSearchParams({width, height}),
+  }).catch(() => {});
+}
 
-    if (e.target.classList.contains("note-resize")) {
-      isResizing = true;
-      activeNote = noteEl;
-      const rect = noteEl.getBoundingClientRect();
-      startWidth = rect.width;
-      startHeight = rect.height;
-      startMouseX = clientX;
-      startMouseY = clientY;
-      e.preventDefault();
-      return;
-    }
-    if (e.target.closest(".note-handle")) {
-      isDragging = true;
-      activeNote = noteEl;
-      const rect = noteEl.getBoundingClientRect();
-      offsetX = clientX - rect.left;
-      offsetY = clientY - rect.top;
-      noteEl.style.zIndex = String(Date.now());
-      e.preventDefault();
-    }
-  }
-
-  function handleMove(e) {
-    if (!activeNote) return;
-
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-    const boardRect = board.getBoundingClientRect();
-
-    if (isDragging) {
-      let x = clientX - boardRect.left - offsetX;
-      let y = clientY - boardRect.top - offsetY;
-      x = Math.max(0, Math.min(x, boardRect.width - activeNote.offsetWidth));
-      y = Math.max(0, Math.min(y, boardRect.height - activeNote.offsetHeight));
-      activeNote.style.left = x + "px";
-      activeNote.style.top = y + "px";
-    } else if (isResizing) {
-      let newWidth = startWidth + (clientX - startMouseX);
-      let newHeight = startHeight + (clientY - startMouseY);
-      newWidth = Math.max(160, newWidth);
-      newHeight = Math.max(160, newHeight);
-      activeNote.style.width = newWidth + "px";
-      activeNote.style.height = newHeight + "px";
-    }
-  }
-
-  board?.addEventListener("mousedown", handleStart);
-  board?.addEventListener("touchstart", handleStart, { passive: false });
-
-  window.addEventListener("mousemove", handleMove);
-  window.addEventListener("touchmove", handleMove, { passive: false });
-
-  function sendPositionUpdate(noteEl) {
-    const id = noteEl.dataset.id;
-    const x = parseInt(noteEl.style.left, 10) || 0;
-    const y = parseInt(noteEl.style.top, 10) || 0;
-    fetch(`/notes/${id}/position/`, {
-      method: "POST",
-      headers: {
-        "X-CSRFToken": csrfToken,
-        "X-Requested-With": "XMLHttpRequest",
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: new URLSearchParams({ x, y }),
-    }).catch(() => {});
-  }
-
-  function sendSizeUpdate(noteEl) {
-    const id = noteEl.dataset.id;
-    const width = parseInt(noteEl.style.width, 10) || 200;
-    const height = parseInt(noteEl.style.height, 10) || 200;
-    fetch(`/notes/${id}/size/`, {
-      method: "POST",
-      headers: {
-        "X-CSRFToken": csrfToken,
-        "X-Requested-With": "XMLHttpRequest",
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: new URLSearchParams({ width, height }),
-    }).catch(() => {});
-  }
-
-  function handleEnd() {
-    if (activeNote && isDragging) {
+function handleEnd() {
+  if (activeNote && isDragging) {
+    if (deleteZone && deleteZone.classList.contains('drag-over')) {
+      const noteId = activeNote.dataset.id;
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = `/notes/${noteId}/delete/`;
+      const csrfInput = document.createElement('input');
+      csrfInput.type = 'hidden';
+      csrfInput.name = 'csrfmiddlewaretoken';
+      csrfInput.value = csrfToken;
+      form.appendChild(csrfInput);
+      document.body.appendChild(form);
+      form.submit();
+    } else {
       sendPositionUpdate(activeNote);
     }
-    if (activeNote && isResizing) {
-      sendSizeUpdate(activeNote);
+    activeNote.classList.remove('dragging');
+  }
+  if (activeNote && isResizing) {
+    sendSizeUpdate(activeNote);
+  }
+  
+  deleteZone?.classList.remove('active', 'drag-over');
+  document.body.classList.remove('dragging-note');
+  
+  isDragging = false;
+  isResizing = false;
+  activeNote = null;
+}
+
+window.addEventListener('mouseup', handleEnd);
+window.addEventListener('touchend', handleEnd);
+
+// Modal handling
+const modal = document.getElementById('note-modal');
+const modalClose = document.getElementById('modal-close');
+const modalCancel = document.getElementById('modal-cancel');
+const modalDelete = document.getElementById('modal-delete');
+const noteForm = document.getElementById('note-form');
+const deleteForm = document.getElementById('note-delete-form');
+const modalIdInput = document.getElementById('modal-note-id');
+const modalTitleInput = document.getElementById('modal-title');
+const modalColorInput = document.getElementById('modal-color');
+const modalTagInput = document.getElementById('modal-tag');
+const modalContentHidden = document.getElementById('modal-content-hidden');
+const modalMeta = document.getElementById('modal-meta');
+
+function openModal(trigger) {
+  const id = trigger.dataset.noteId;
+  const noteEl = trigger.closest('.note');
+  const modalContent = document.getElementById('note-modal-content');
+  
+  modalIdInput.value = id;
+  modalTitleInput.value = trigger.dataset.title || '';
+  modalContentHidden.value = trigger.dataset.content || '';
+  modalColorInput.value = trigger.dataset.color || '#FFF176';
+  modalTagInput.value = trigger.dataset.tag || '';
+  modalMeta.textContent = trigger.dataset.lastEdited ? `Last edited ${trigger.dataset.lastEdited}` : '';
+  noteForm.action = `/notes/${id}/update/`;
+  deleteForm.action = `/notes/${id}/delete/`;
+  
+  // Position modal next to the note where there's space
+  if (noteEl && modalContent) {
+    const noteRect = noteEl.getBoundingClientRect();
+    const modalWidth = 384; // max-w-sm = 384px
+    const modalHeight = 500; // approximate height
+    const padding = 16;
+    
+    // Calculate available space on each side
+    const spaceRight = window.innerWidth - noteRect.right - padding;
+    const spaceLeft = noteRect.left - padding;
+    const spaceTop = noteRect.top - padding;
+    const spaceBottom = window.innerHeight - noteRect.bottom - padding;
+    
+    let left, top;
+    
+    // Prefer right side if there's enough space
+    if (spaceRight >= modalWidth) {
+      left = noteRect.right + padding;
+      top = noteRect.top;
     }
-    isDragging = false;
-    isResizing = false;
-    activeNote = null;
+    // Otherwise try left side
+    else if (spaceLeft >= modalWidth) {
+      left = noteRect.left - modalWidth - padding;
+      top = noteRect.top;
+    }
+    // If neither side works, try below
+    else if (spaceBottom >= modalHeight) {
+      left = noteRect.left;
+      top = noteRect.bottom + padding;
+    }
+    // If below doesn't work, try above
+    else if (spaceTop >= modalHeight) {
+      left = noteRect.left;
+      top = noteRect.top - modalHeight - padding;
+    }
+    // Last resort: center on screen
+    else {
+      left = (window.innerWidth - modalWidth) / 2;
+      top = (window.innerHeight - modalHeight) / 2;
+    }
+    
+    // Ensure modal stays within viewport bounds
+    left = Math.max(padding, Math.min(left, window.innerWidth - modalWidth - padding));
+    top = Math.max(padding, Math.min(top, window.innerHeight - modalHeight - padding));
+    
+    modalContent.style.left = left + 'px';
+    modalContent.style.top = top + 'px';
+  }
+  
+  modal.classList.remove('hidden');
+  modal.style.display = 'block';
+}
+
+function closeModal() {
+  modal.classList.add('hidden');
+  modal.style.display = 'none';
+}
+
+document.querySelectorAll('.open-note').forEach(btn => {
+  btn.addEventListener('click', () => openModal(btn));
+});
+
+modalClose?.addEventListener('click', closeModal);
+modalCancel?.addEventListener('click', closeModal);
+modal.addEventListener('click', (e) => {
+  if (e.target === modal) closeModal();
+});
+
+modalDelete?.addEventListener('click', () => {
+  deleteForm.submit();
+});
+
+// Mobile board selector
+const mobileBoardSelect = document.getElementById('mobile-board-select');
+mobileBoardSelect?.addEventListener('change', (e) => {
+  window.location.href = `/board/${e.target.value}/`;
+});
+
+// Inline content editing
+const noteContents = document.querySelectorAll('.note-content[contenteditable]');
+let contentSaveTimeout;
+
+noteContents.forEach(content => {
+  if (!content.textContent.trim()) {
+    content.classList.add('empty');
   }
 
-  window.addEventListener("mouseup", handleEnd);
-  window.addEventListener("touchend", handleEnd);
-
-  // Modal handling
-  const modal = document.getElementById("note-modal");
-  const modalClose = document.getElementById("modal-close");
-  const modalCancel = document.getElementById("modal-cancel");
-  const modalDelete = document.getElementById("modal-delete");
-  const noteForm = document.getElementById("note-form");
-  const deleteForm = document.getElementById("note-delete-form");
-  const modalIdInput = document.getElementById("modal-note-id");
-  const modalTitleInput = document.getElementById("modal-title");
-  const modalContentInput = document.getElementById("modal-content");
-  const modalColorInput = document.getElementById("modal-color");
-  const modalTagsInput = document.getElementById("modal-tags");
-  const modalMeta = document.getElementById("modal-meta");
-
-  function openModal(trigger) {
-    const id = trigger.dataset.noteId;
-    modalIdInput.value = id;
-    modalTitleInput.value = trigger.dataset.title || "";
-    modalContentInput.value = trigger.dataset.content || "";
-    modalColorInput.value = trigger.dataset.color || "#FFF176";
-    modalTagsInput.value = trigger.dataset.tags || "";
-    modalMeta.textContent = trigger.dataset.lastEdited
-      ? `Last edited ${trigger.dataset.lastEdited}`
-      : "";
-    noteForm.action = `/notes/${id}/update/`;
-    deleteForm.action = `/notes/${id}/delete/`;
-    modal.classList.remove("hidden");
-    modal.classList.add("flex");
-  }
-
-  function closeModal() {
-    modal.classList.add("hidden");
-    modal.classList.remove("flex");
-  }
-
-  document.querySelectorAll(".open-note").forEach((btn) => {
-    btn.addEventListener("click", () => openModal(btn));
+  content.addEventListener('focus', (e) => {
+    if (content.classList.contains('empty')) {
+      content.textContent = '';
+      content.classList.remove('empty');
+    }
   });
 
-  modalClose?.addEventListener("click", closeModal);
-  modalCancel?.addEventListener("click", closeModal);
-  modal.addEventListener("click", (e) => {
-    if (e.target === modal) closeModal();
+  content.addEventListener('blur', (e) => {
+    const noteId = content.dataset.noteId;
+    const text = content.textContent;
+    
+    if (!text.trim()) {
+      content.classList.add('empty');
+    }
+
+    clearTimeout(contentSaveTimeout);
+    contentSaveTimeout = setTimeout(() => {
+      fetch(`/notes/${noteId}/content/`, {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': csrfToken,
+          'X-Requested-With': 'XMLHttpRequest',
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({content: text}),
+      }).catch(() => {});
+    }, 500);
   });
 
-  modalDelete?.addEventListener("click", () => {
-    deleteForm.submit();
+  content.addEventListener('input', (e) => {
+    if (content.textContent.trim()) {
+      content.classList.remove('empty');
+    }
   });
+});
 
-  // Quick tag selector UX
-  const quickTagsToggle = document.getElementById("quick-tags-toggle");
-  const quickTagsMenu = document.getElementById("quick-tags-menu");
-  const quickTagsInput = document.getElementById("quick-tags-input");
-
-  function addTagToInput(input, tag) {
-    const current = input.value.trim();
-    if (!current) {
-      input.value = tag;
-      return;
-    }
-    const parts = current
-      .split(",")
-      .map((t) => t.trim())
-      .filter(Boolean);
-    if (!parts.includes(tag)) {
-      parts.push(tag);
-      input.value = parts.join(", ");
-    }
-  }
-
-  quickTagsToggle?.addEventListener("click", (e) => {
+// Board options menu
+const boardOptionsButtons = document.querySelectorAll('.board-options-btn');
+boardOptionsButtons.forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    e.preventDefault();
     e.stopPropagation();
-    quickTagsMenu?.classList.toggle("hidden");
-  });
-
-  quickTagsMenu?.querySelectorAll(".tag-option").forEach((btn) => {
-    btn.addEventListener("click", (e) => {
-      e.preventDefault();
-      const tag = btn.dataset.tag;
-      if (quickTagsInput && tag) {
-        addTagToInput(quickTagsInput, tag);
-        quickTagsInput.focus();
-      }
-      if (quickTagsMenu) {
-        quickTagsMenu.classList.add("hidden");
-      }
+    const boardId = btn.dataset.boardId;
+    const menu = document.querySelector(`.board-options-menu[data-board-id="${boardId}"]`);
+    
+    document.querySelectorAll('.board-options-menu').forEach(m => {
+      if (m !== menu) m.classList.add('hidden');
     });
+    
+    menu?.classList.toggle('hidden');
   });
+});
 
-  window.addEventListener("click", (e) => {
-    if (!quickTagsMenu || !quickTagsToggle) return;
-    if (!quickTagsMenu.contains(e.target) && e.target !== quickTagsToggle) {
-      quickTagsMenu.classList.add("hidden");
+window.addEventListener('click', (e) => {
+  if (!e.target.closest('.board-options-btn') && !e.target.closest('.board-options-menu')) {
+    document.querySelectorAll('.board-options-menu').forEach(m => m.classList.add('hidden'));
+  }
+});
+
+// New Board Modal
+const newBoardModal = document.getElementById('new-board-modal');
+const newBoardBtn = document.getElementById('new-board-btn');
+const newBoardClose = document.getElementById('new-board-close');
+const newBoardCancel = document.getElementById('new-board-cancel');
+
+newBoardBtn?.addEventListener('click', () => {
+  newBoardModal.classList.remove('hidden');
+  newBoardModal.classList.add('flex');
+});
+
+newBoardClose?.addEventListener('click', () => {
+  newBoardModal.classList.add('hidden');
+  newBoardModal.classList.remove('flex');
+});
+
+newBoardCancel?.addEventListener('click', () => {
+  newBoardModal.classList.add('hidden');
+  newBoardModal.classList.remove('flex');
+});
+
+newBoardModal?.addEventListener('click', (e) => {
+  if (e.target === newBoardModal) {
+    newBoardModal.classList.add('hidden');
+    newBoardModal.classList.remove('flex');
+  }
+});
+
+// Rename Board Modal
+const renameBoardModal = document.getElementById('rename-board-modal');
+const renameBoardForm = document.getElementById('rename-board-form');
+const renameBoardInput = document.getElementById('rename-board-input');
+const renameBoardClose = document.getElementById('rename-board-close');
+const renameBoardCancel = document.getElementById('rename-board-cancel');
+
+document.querySelectorAll('.rename-board-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const boardId = btn.dataset.boardId;
+    const boardName = btn.dataset.boardName;
+    renameBoardInput.value = boardName;
+    renameBoardForm.action = `/boards/${boardId}/rename/`;
+    renameBoardModal.classList.remove('hidden');
+    renameBoardModal.classList.add('flex');
+    document.querySelectorAll('.board-options-menu').forEach(m => m.classList.add('hidden'));
+  });
+});
+
+renameBoardClose?.addEventListener('click', () => {
+  renameBoardModal.classList.add('hidden');
+  renameBoardModal.classList.remove('flex');
+});
+
+renameBoardCancel?.addEventListener('click', () => {
+  renameBoardModal.classList.add('hidden');
+  renameBoardModal.classList.remove('flex');
+});
+
+renameBoardModal?.addEventListener('click', (e) => {
+  if (e.target === renameBoardModal) {
+    renameBoardModal.classList.add('hidden');
+    renameBoardModal.classList.remove('flex');
+  }
+});
+
+// Delete Board
+document.querySelectorAll('.delete-board-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const boardId = btn.dataset.boardId;
+    if (confirm('Are you sure you want to delete this board? All notes in this board will be deleted.')) {
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = `/boards/${boardId}/delete/`;
+      const csrfInput = document.createElement('input');
+      csrfInput.type = 'hidden';
+      csrfInput.name = 'csrfmiddlewaretoken';
+      csrfInput.value = csrfToken;
+      form.appendChild(csrfInput);
+      document.body.appendChild(form);
+      form.submit();
     }
   });
+});
+
 </script>
 {% endblock %}
